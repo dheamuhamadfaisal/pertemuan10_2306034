@@ -12,13 +12,27 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  String? usernameError;
+  String? passwordError;
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   Future<void> login() async {
+    setState(() {
+      usernameError = usernameController.text.isEmpty
+          ? 'Username tidak boleh kosong'
+          : null;
+      passwordError = passwordController.text.isEmpty
+          ? 'Password tidak boleh kosong'
+          : null;
+    });
 
-    if (usernameController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username dan Password Tidak Boleh Kosong')),
-      );
+    if (usernameError != null || passwordError != null) {
       return;
     }
 
@@ -54,6 +68,13 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
                   TextField(
                     controller: usernameController,
+                    onChanged: (_) {
+                      if (usernameError != null) {
+                        setState(() {
+                          usernameError = null;
+                        });
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'Username',
                       prefixIcon: const Icon(Icons.person),
@@ -62,10 +83,30 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
+                  if (usernameError != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        usernameError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   TextField(
                     controller: passwordController,
                     obscureText: true,
+                    onChanged: (_) {
+                      if (passwordError != null) {
+                        setState(() {
+                          passwordError = null;
+                        });
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'Password',
                       prefixIcon: const Icon(Icons.lock),
@@ -74,6 +115,19 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
+                  if (passwordError != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        passwordError!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,

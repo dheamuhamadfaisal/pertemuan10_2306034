@@ -1,34 +1,214 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
+import '../models/product_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   String username = '';
+  List<ProductModel> products = [];
 
   @override
-  void initState() { // PERBAIKAN: Menambahkan @override dan tipe void untuk best practice
-    super.initState();  
-    getUsername();
+  void initState() {
+    super.initState();
+    getUser();
+    loadProducts();
   }
 
-  Future<void> getUsername() async {
+  Future<void> getUser() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       username = prefs.getString('username') ?? '';
     });
   }
 
+  Future<void> loadProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> productList = prefs.getStringList('products') ?? [];
+
+    setState(() {
+      products = productList.map((item) => ProductModel.fromJson(item)).toList();
+    });
+  }
+
+  Future<void> saveProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> productList = products.map((item) => item.toJson()).toList();
+    await prefs.setStringList('products', productList);
+  }
+
+  Future<void> addProduct(ProductModel product) async {
+    setState(() {
+      products.add(product);
+    });
+    await saveProducts();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Produk berhasil ditambahkan')),
+    );
+  }
+
+  Future<void> updateProduct(int index, ProductModel product) async {
+    setState(() {
+      products[index] = product;
+    });
+    await saveProducts();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Produk berhasil diperbarui')),
+    );
+  }
+
+  Future<void> deleteProduct(int index) async {
+    setState(() {
+      products.removeAt(index);
+    });
+    await saveProducts();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Produk berhasil dihapus')),
+    );
+  }
+
+  void showForm({ProductModel? product, int? index}) {
+    final formKey = GlobalKey<FormState>(); 
+
+    TextEditingController nameController = TextEditingController(
+      text: product?.name ?? '',
+    );
+    TextEditingController descriptionController = TextEditingController(
+      text: product?.description ?? '',
+    );
+    TextEditingController priceController = TextEditingController(
+      text: product?.price.toString() ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(product == null ? 'Tambah Produk' : 'Edit Produk'),
+        content: Form( 
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama',
+                  hintText: 'Masukkan nama produk',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Nama produk tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              
+              TextFormField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Deskripsi',
+                  hintText: 'Masukkan deskripsi produk',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.next,
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Deskripsi produk tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              TextFormField(
+                controller: priceController,
+                decoration: const InputDecoration(
+                  labelText: 'Harga',
+                  hintText: 'Masukkan harga produk',
+                  border: OutlineInputBorder(),
+                  prefixText: 'Rp ',
+                ),
+                textInputAction: TextInputAction.done,
+                keyboardType: TextInputType.number,
+                onFieldSubmitted: (_) {
+                  // 
+                  if (formKey.currentState!.validate()) {
+                    final newProduct = ProductModel(
+                      name: nameController.text.trim(),
+                      description: descriptionController.text.trim(),
+                      price: int.parse(priceController.text.trim()),
+                    );
+                    if (product == null) {
+                      addProduct(newProduct);
+                    } else {
+                      updateProduct(index!, newProduct);
+                    }
+                    Navigator.pop(context);
+                  }
+                },
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Harga produk tidak boleh kosong';
+                  }
+                  if (int.tryParse(value.trim()) == null) {
+                    return 'Harga harus berupa angka';
+                  }
+                  if (int.parse(value.trim()) <= 0) {
+                    return 'Harga harus lebih dari 0';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            onPressed: () {
+              
+              if (formKey.currentState!.validate()) {
+                final newProduct = ProductModel(
+                  name: nameController.text.trim(),
+                  description: descriptionController.text.trim(),
+                  price: int.parse(priceController.text.trim()),
+                );
+                if (product == null) {
+                  addProduct(newProduct);
+                } else {
+                  updateProduct(index!, newProduct);
+                }
+                Navigator.pop(context);
+              }
+            },
+            child: Text(
+              product == null ? 'Simpan' : 'Perbarui', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
-  
-    if (!mounted) return; // Mengamankan context async sebelum melakukan navigasi
+    await prefs.clear();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -38,97 +218,132 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: const Color(0xFFE0F7FA),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showForm(),
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.add),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Container(
-            // Nilai height diubah ke 150 (sesuai kode terakhir Anda) agar muat menampung tombol ke bawah
-            height: 150,
-            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: const NetworkImage(
-                    'https://i.pravatar.cc/150?img=3',
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min, // Memastikan Column tidak memakan space berlebih
-                    children: [
-                      Text(
-                        "Hai, Selamat Datang, $username!",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[800],
-                          fontWeight: FontWeight.bold,
-                        ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 28,
+                      backgroundImage: NetworkImage(
+                        "https://picsum.photos/id/64/4326/2884",
                       ),
-                      const SizedBox(height: 5),
-                      Row(
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            username,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            'Hai, Selamat Datang!',
+                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                           ),
-                          const SizedBox(width: 5),
-                          const Icon(
-                            Icons.verified, 
-                            color: Colors.blue, 
-                            size: 16,
-                          ),
-                        ], // PERBAIKAN: Menghapus const SizedBox(height: 15) yang salah posisi di dalam Row
-                      ),
-                      const SizedBox(height: 10), // Jarak vertikal sebelum tombol logout
-                      
-                      // 🛠️ PERBAIKAN UTAMA: Memasang InkWell agar Container bisa diklik
-                      InkWell(
-                        onTap: logout, // Menjalankan fungsi logout saat ditekan
-                        borderRadius: BorderRadius.circular(10), // Efek riak air (ripple) mengikuti bentuk tombol
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFB3E5FC).withOpacity(0.5),
-                                blurRadius: 5,
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Text(
+                                username,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.verified, color: Colors.green, size: 20),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.logout,
-                            color: Colors.blue,
-                            size: 24,
-                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      onTap: logout,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
-                      ), 
-                    ], // PERBAIKAN: Menyusun ulang penutupan kurung array Column dan Induknya
-                  ),
+                        child: const Icon(Icons.logout, size: 28, color: Colors.red),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ), 
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: products.isEmpty
+                    ? const Center(
+                        child: Text('Belum ada produk', style: TextStyle(fontSize: 16)),
+                      )
+                    : ListView.builder(
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(15),
+                              title: Text(
+                                product.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 5),
+                                  Text('Rp ${product.price}'),
+                                  const SizedBox(height: 5),
+                                  Text(product.description),
+                                ],
+                              ),
+                              leading: IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                onPressed: () => showForm(
+                                  product: products[index],
+                                  index: index,
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => deleteProduct(index),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
         ),
       ),
