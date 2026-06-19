@@ -16,7 +16,7 @@ class ProductDetailPage extends StatelessWidget {
           children: [
             Text(
               product.name,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Text('Rp ${product.price}'),

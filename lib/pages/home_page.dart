@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> {
                 child: products.isEmpty
                     ? const Center(
                         child: Text(
-                          'Belum ada produk',
+                          'Belum Ada Produk',
                           style: TextStyle(fontSize: 16),
                         ),
                       )

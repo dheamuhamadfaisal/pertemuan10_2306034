@@ -37,7 +37,7 @@ class ProductCard extends StatelessWidget {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.edit, color: Colors.orange),
+          icon: const Icon(Icons.edit, color: Color.fromARGB(255, 251, 164, 34)),
           onPressed: onEdit,
         ),
         trailing: IconButton(

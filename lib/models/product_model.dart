@@ -9,6 +9,7 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.price
+    
   });
 
   Map<String, dynamic> toMap(){

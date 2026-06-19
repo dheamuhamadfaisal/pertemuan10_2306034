@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   if (usernameError != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(

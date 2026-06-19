@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       isLogin = prefs.getBool('isLogin') ?? false;
       isLoading = false;
+      
     });
   }
 

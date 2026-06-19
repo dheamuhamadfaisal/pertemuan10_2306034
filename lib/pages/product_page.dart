@@ -139,7 +139,7 @@ class _ProductPageState extends State<ProductPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: Colors.green,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
