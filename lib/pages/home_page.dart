@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pertemuan10_2306034/pages/product_detail_page.dart';
+import 'package:pertemuan10_2306034/pages/product_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import '../models/product_model.dart';
@@ -13,6 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String username = '';
   List<ProductModel> products = [];
+  int totalProducts = 0;
 
   @override
   void initState() {
@@ -31,179 +34,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> productList = prefs.getStringList('products') ?? [];
-
+    totalProducts = productList.length;
     setState(() {
-      products = productList.map((item) => ProductModel.fromJson(item)).toList();
+      products = productList.reversed
+          .take(3)
+          .map((item) => ProductModel.fromJson(item))
+          .toList();
     });
-  }
-
-  Future<void> saveProducts() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> productList = products.map((item) => item.toJson()).toList();
-    await prefs.setStringList('products', productList);
-  }
-
-  Future<void> addProduct(ProductModel product) async {
-    setState(() {
-      products.add(product);
-    });
-    await saveProducts();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Produk berhasil ditambahkan')),
-    );
-  }
-
-  Future<void> updateProduct(int index, ProductModel product) async {
-    setState(() {
-      products[index] = product;
-    });
-    await saveProducts();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Produk berhasil diperbarui')),
-    );
-  }
-
-  Future<void> deleteProduct(int index) async {
-    setState(() {
-      products.removeAt(index);
-    });
-    await saveProducts();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Produk berhasil dihapus')),
-    );
-  }
-
-  void showForm({ProductModel? product, int? index}) {
-    final formKey = GlobalKey<FormState>(); 
-
-    TextEditingController nameController = TextEditingController(
-      text: product?.name ?? '',
-    );
-    TextEditingController descriptionController = TextEditingController(
-      text: product?.description ?? '',
-    );
-    TextEditingController priceController = TextEditingController(
-      text: product?.price.toString() ?? '',
-    );
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(product == null ? 'Tambah Produk' : 'Edit Produk'),
-        content: Form( 
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nama',
-                  hintText: 'Masukkan nama produk',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Nama produk tidak boleh kosong';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                  hintText: 'Masukkan deskripsi produk',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.next,
-                maxLines: 2,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Deskripsi produk tidak boleh kosong';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: priceController,
-                decoration: const InputDecoration(
-                  labelText: 'Harga',
-                  hintText: 'Masukkan harga produk',
-                  border: OutlineInputBorder(),
-                  prefixText: 'Rp ',
-                ),
-                textInputAction: TextInputAction.done,
-                keyboardType: TextInputType.number,
-                onFieldSubmitted: (_) {
-                  // 
-                  if (formKey.currentState!.validate()) {
-                    final newProduct = ProductModel(
-                      name: nameController.text.trim(),
-                      description: descriptionController.text.trim(),
-                      price: int.parse(priceController.text.trim()),
-                    );
-                    if (product == null) {
-                      addProduct(newProduct);
-                    } else {
-                      updateProduct(index!, newProduct);
-                    }
-                    Navigator.pop(context);
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Harga produk tidak boleh kosong';
-                  }
-                  if (int.tryParse(value.trim()) == null) {
-                    return 'Harga harus berupa angka';
-                  }
-                  if (int.parse(value.trim()) <= 0) {
-                    return 'Harga harus lebih dari 0';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            onPressed: () {
-              
-              if (formKey.currentState!.validate()) {
-                final newProduct = ProductModel(
-                  name: nameController.text.trim(),
-                  description: descriptionController.text.trim(),
-                  price: int.parse(priceController.text.trim()),
-                );
-                if (product == null) {
-                  addProduct(newProduct);
-                } else {
-                  updateProduct(index!, newProduct);
-                }
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              product == null ? 'Simpan' : 'Perbarui', style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> logout() async {
@@ -219,18 +56,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE0F7FA),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showForm(),
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
-      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 20,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -258,7 +93,10 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Text(
                             'Hai, Selamat Datang!',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
                           ),
                           const SizedBox(height: 5),
                           Row(
@@ -271,7 +109,11 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Icon(Icons.verified, color: Colors.green, size: 20),
+                              const Icon(
+                                Icons.verified,
+                                color: Colors.green,
+                                size: 20,
+                              ),
                             ],
                           ),
                         ],
@@ -291,17 +133,46 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.logout, size: 28, color: Colors.red),
+                        child: const Icon(
+                          Icons.logout,
+                          size: 28,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 20),
+              Row(
+                children: [
+                  Text(
+                    "Total Semua Produk ${totalProducts.toString()}",
+                    style: TextStyle(fontWeight: .bold),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProductPage(),
+                        ),
+                      );
+                    },
+                    
+                    child: const Text("Lihat Selengkapnya"),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
               Expanded(
                 child: products.isEmpty
                     ? const Center(
-                        child: Text('Belum ada produk', style: TextStyle(fontSize: 16)),
+                        child: Text(
+                          'Belum ada produk',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       )
                     : ListView.builder(
                         itemCount: products.length,
@@ -316,7 +187,15 @@ class _HomePageState extends State<HomePage> {
                               contentPadding: const EdgeInsets.all(15),
                               title: Text(
                                 product.name,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailPage(product: product),
+                                )
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,17 +205,6 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 5),
                                   Text(product.description),
                                 ],
-                              ),
-                              leading: IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.orange),
-                                onPressed: () => showForm(
-                                  product: products[index],
-                                  index: index,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => deleteProduct(index),
                               ),
                             ),
                           );
