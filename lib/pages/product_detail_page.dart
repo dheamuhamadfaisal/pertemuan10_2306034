@@ -24,7 +24,7 @@ class ProductDetailPage extends StatelessWidget {
             Text(product.description),
           ],
         ),
-      )
+      ),
     );
   }
 }

@@ -48,6 +48,6 @@ class _MyAppState extends State<MyApp> {
         isLogin 
         ? const HomePage() 
         : const LoginPage(),
-      );
-    }
+    );
+  }
 }

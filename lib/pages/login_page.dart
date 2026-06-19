@@ -25,10 +25,10 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> login() async {
     setState(() {
       usernameError = usernameController.text.isEmpty
-          ? 'Username tidak boleh kosong'
+          ? 'Username Tidak Boleh Kosong'
           : null;
       passwordError = passwordController.text.isEmpty
-          ? 'Password tidak boleh kosong'
+          ? 'Password Tidak Boleh Kosong'
           : null;
     });
 

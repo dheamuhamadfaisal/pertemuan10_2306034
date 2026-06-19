@@ -40,7 +40,7 @@ class _ProductPageState extends State<ProductPage> {
     });
     await saveProducts();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Produk berhasil ditambahkan')),
+      const SnackBar(content: Text('Produk Berhasil Ditambahkan')),
     );
   }
 
@@ -50,7 +50,7 @@ class _ProductPageState extends State<ProductPage> {
     });
     await saveProducts();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Produk berhasil diperbarui')),
+      const SnackBar(content: Text('Produk Berhasil Diperbarui')),
     );
   }
 
@@ -111,7 +111,7 @@ class _ProductPageState extends State<ProductPage> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'Nama wajib diisi' : null,
+                      value == null || value.isEmpty ? 'Nama Wajib Diisi' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -190,7 +190,7 @@ class _ProductPageState extends State<ProductPage> {
               child: products.isEmpty
                   ? const Center(
                       child: Text(
-                        'Belum ada produk',
+                        'Belum Ada Produk',
                         style: TextStyle(fontSize: 16),
                       ),
                     )

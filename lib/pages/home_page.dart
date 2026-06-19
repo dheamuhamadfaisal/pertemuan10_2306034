@@ -204,12 +204,12 @@ class _HomePageState extends State<HomePage> {
                                   Text('Rp ${product.price}'),
                                   const SizedBox(height: 5),
                                   Text(product.description),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
