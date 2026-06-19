@@ -17,11 +17,8 @@ class _ProductPageState extends State<ProductPage> {
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> productList = prefs.getStringList('products') ?? [];
-
     setState(() {
-      products = productList
-          .map((item) => ProductModel.fromJson(item))
-          .toList();
+      products = productList.map((item) => ProductModel.fromJson(item)).toList();
     });
   }
 
@@ -52,9 +49,9 @@ class _ProductPageState extends State<ProductPage> {
       products[index] = product;
     });
     await saveProducts();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Produk berhasil diperbarui')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Produk berhasil diperbarui')),
+    );
   }
 
   Future<void> deleteProduct(int index) async {
@@ -62,9 +59,9 @@ class _ProductPageState extends State<ProductPage> {
       products.removeAt(index);
     });
     await saveProducts();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Produk berhasil dihapus')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Produk berhasil dihapus')),
+    );
   }
 
   void showForm({ProductModel? product, int? index}) {
@@ -80,94 +77,98 @@ class _ProductPageState extends State<ProductPage> {
       text: product?.price.toString() ?? '',
     );
 
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Produk", style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.black,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-        ),
-        body: Container(
-          margin: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Expanded(
-                child: products.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Belum ada produk',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(15),
-                              title: Text(
-                                product.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ProductDetailPage(product: product),
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 5),
-                                  Text('Rp ${product.price}'),
-                                  const SizedBox(height: 5),
-                                  Text(product.description),
-                                ],
-                              ),
-                              leading: IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.orange,
-                                ),
-                                onPressed: () => showForm(
-                                  product: products[index],
-                                  index: index,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () => deleteProduct(index),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  index == null ? 'Tambah Produk' : 'Edit Produk',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Produk',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Nama wajib diisi' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Deskripsi',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Deskripsi wajib diisi' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Harga wajib diisi' : null,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      if (formKey.currentState!.validate()) {
+                        final newProduct = ProductModel(
+                          name: nameController.text,
+                          description: descriptionController.text,
+                          price: int.parse(priceController.text),
+                        );
+                        Navigator.pop(context);
+                        if (index == null) {
+                          addProduct(newProduct);
+                        } else {
+                          updateProduct(index, newProduct);
+                        }
+                      }
+                    },
+                    child: Text(
+                      index == null ? 'Tambah' : 'Perbarui',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => showForm(),
-          backgroundColor: Colors.teal,
-          child: const Icon(Icons.add),
-        ),
-      );
-    }
+        );
+      },
+    );
   }
 
   @override
@@ -177,7 +178,7 @@ class _ProductPageState extends State<ProductPage> {
         title: const Text("Produk", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -204,8 +205,7 @@ class _ProductPageState extends State<ProductPage> {
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                ProductDetailPage(product: product),
+                              builder: (_) => ProductDetailPage(product: product),
                             ),
                           ),
                         );
